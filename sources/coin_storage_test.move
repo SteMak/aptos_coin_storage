@@ -1,4 +1,4 @@
-// The file contains main module code
+// The file contains the test module code
 
 #[test_only]
 module coin_storage::storage_tests {
@@ -34,7 +34,7 @@ module coin_storage::storage_tests {
         coin::register<FakeMoney>(account);
         coin::deposit<FakeMoney>(account_addr, coins_minted);
 
-        // Destroy unneed resources
+        // Destroy unneeded resources
         coin::destroy_freeze_cap<FakeMoney>(freeze_cap);
         coin::destroy_burn_cap<FakeMoney>(burn_cap);
         coin::destroy_mint_cap<FakeMoney>(mint_cap);
@@ -43,12 +43,12 @@ module coin_storage::storage_tests {
     // Test case of normal flow
     #[test(source = @coin_storage)]
     public entry fun normal_flow(source: signer) {
-        // It is easier to use borrowed signer
+        // It is easier to use the borrowed signer
         let account = &source;
-        // Get address of signer
+        // Get an address of the signer
         let account_addr = signer::address_of(account);
 
-        // Init address in chain
+        // Init address in the local chain
         account::create_account_for_test(account_addr);
 
         // Mint Fake Money
@@ -56,22 +56,22 @@ module coin_storage::storage_tests {
         assert!(coin_storage::balance<FakeMoney>(account_addr) == 0, 0);
         assert!(coin::balance<FakeMoney>(account_addr) == 100, 0);
 
-        // Make deposit
+        // Make a deposit
         coin_storage::deposit<FakeMoney>(account, 10);
         assert!(coin_storage::balance<FakeMoney>(account_addr) == 10, 0);
         assert!(coin::balance<FakeMoney>(account_addr) == 90, 0);
 
-        // Make deposit
+        // Make a deposit
         coin_storage::deposit<FakeMoney>(account, 5);
         assert!(coin_storage::balance<FakeMoney>(account_addr) == 15, 0);
         assert!(coin::balance<FakeMoney>(account_addr) == 85, 0);
 
-        // Make withdraw
+        // Make a withdraw
         coin_storage::withdraw<FakeMoney>(account, 10);
         assert!(coin_storage::balance<FakeMoney>(account_addr) == 5, 0);
         assert!(coin::balance<FakeMoney>(account_addr) == 95, 0);
 
-        // Make withdraw
+        // Make a withdraw
         coin_storage::withdraw<FakeMoney>(account, 5);
         assert!(coin_storage::balance<FakeMoney>(account_addr) == 0, 0);
         assert!(coin::balance<FakeMoney>(account_addr) == 100, 0);

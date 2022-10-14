@@ -1,6 +1,6 @@
-// The file contains main module code
+// The file contains the main module code
 
-// coin_storage on the left is address defined in Move.toml
+// coin_storage on the left is the address defined in Move.toml
 module coin_storage::coin_storage {
     // Import some standard common used modules
     use aptos_std::coin;
@@ -8,7 +8,7 @@ module coin_storage::coin_storage {
     use aptos_std::error;
 
     // Declare main contract resource
-    // It simply wraps coin::Coin resource
+    // It simply wraps the coin::Coin resource
     struct Storage<phantom CoinType> has key {
         coin: coin::Coin<CoinType>,
     }
@@ -23,19 +23,19 @@ module coin_storage::coin_storage {
         exists<Storage<CoinType>>(account_addr)
     }
 
-    // Helper function for registring Storage resource for the user
+    // Helper function for registering a Storage resource for the user
     fun register<CoinType>(account: &signer) {
         let account_addr = signer::address_of(account);
         // Should never happen as it is checked before calling the function
         assert!(!is_registered<CoinType>(account_addr), error::internal(E_BROKEN_CONTRACT));
 
-        // Move resource to the account
+        // Move the resource to the account
         move_to(account, Storage<CoinType> {
             coin: coin::zero<CoinType>(),
         });
     }
 
-    // Helper function for destroying empty resource
+    // Helper function for destroying an empty resource
     fun destroy_zero<CoinType>(zero: Storage<CoinType>) {
         // Destruct Storage struct
         let Storage { coin } = zero;
@@ -63,11 +63,11 @@ module coin_storage::coin_storage {
 
         // Borrowing mutable Storage resource
         let stored = borrow_global_mut<Storage<CoinType>>(account_addr);
-        // Transmit mutable reference to stored coin::Coin and extracting amount from it
+        // Transmit mutable reference to stored coin::Coin and extract amount from it
         coin::extract<CoinType>(&mut stored.coin, amount)
     }
 
-    // Helper function for depositing token back to user
+    // Helper function for depositing tokens back to the user
     fun transfer_to<CoinType>(account: &signer, token: coin::Coin<CoinType>) {
         let account_addr = signer::address_of(account);
 
@@ -79,7 +79,7 @@ module coin_storage::coin_storage {
         coin::deposit<CoinType>(account_addr, token);
     }
 
-    // Entry deposit function, it is callable by user or another module
+    // Entry deposit function is callable by a user or another module
     public entry fun deposit<CoinType>(account: &signer, amount: u64)
     acquires Storage {
         //==> hack
@@ -110,7 +110,7 @@ module coin_storage::coin_storage {
     #[test_only]
     friend coin_storage::storage_tests;
 
-    // Entry withdraw function, it is callable only by user
+    // Entry withdraw function is callable only by the user
     public(friend) entry fun withdraw<CoinType>(account: &signer, amount: u64)
     acquires Storage {
         // Skip if zero amount is provided
@@ -139,7 +139,7 @@ module coin_storage::coin_storage {
         };
     }
 
-    // Entry function for checking stored amount
+    // Entry function for checking the stored amount
     public entry fun balance<CoinType>(account_addr: address): u64
     acquires Storage {
         // Skip if is not registered
