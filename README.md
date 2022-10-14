@@ -13,8 +13,14 @@ The project aims to show `Aptos` features and highlight important security point
     - [Repo structure](#repo-structure)
     - [Move.toml](#movetoml)
     - [Module structure](#module-structure)
-  - [Code notes](#code-notes)
+  - [Objective](#objective)
+    - [Abstract](#abstract)
+    - [Solution](#solution)
+    - [Hack example](#hack-example)
   - [Getting started](#getting-started)
+    - [Setup](#setup)
+    - [Develop](#develop)
+    - [Deploy & Interact](#deploy--interact)
   - [Functional requirements](#functional-requirements)
     - [Deposit](#deposit)
     - [Withdraw](#withdraw)
@@ -177,9 +183,87 @@ Structs, friends and functions may be marked by `#[test_only]`
 This means the code is applied only for tests and is not accessible on-chain
 
 
-## Code notes
+## Objective
+### Abstract
+According to the current implementation of the `aptos_std::coin` it is possible for anyone who has access to the `signer` object to withdraw any coins stored in the account. In `EVM` systems, it is called authorization through `tx.origin` and is considered to be a critical issue as any contract (module) which user calls may be confused with the user.
+
+However, it is the expected behavior in the Aptos network, and when a user starts a transaction, the called module gets the `signer` object which is the only thing that could be checked for auth.
+
+In such a way, it is important to check contracts (or contract audits at least) before calling them. It needs to be mentioned that contracts may be updated, so the current version should be checked. Generally, a Front-Running attack may be used: contract owner sees a rich user calls the contract and adds harmful code [making gas cost extremely higher](https://aptos.dev/concepts/basics-gas-txn-fee/#prioritizing-your-transaction).
+
+Moreover, all the module dependencies should be checked as the `signer` object is transmitted to most of the dependencies.
+
+In `EVM` systems, upgrades are also vulnerable but only attached (allowed) deposit may be stolen, whether all funds may be withdrawn in the Aptos network.
+
+### Solution
+Storing funds wrapped by a module like this one is safe because only the owner itself can withdraw funds from there. The `withdraw` function of the module is marked `public(friends) entry`, and there are no friends specified in the module, so only the owner is able to call the function outside of the network. The contract upgrade policy is defined as `immutable` in the `Move.toml` config, so it is not possible for the contract maintainer to change the contract code and steal any funds.
+
+### Hack example
+- Remove `upgrade_policy = "immutable"` line from `Move.toml` file and deploy the module.
+- Currently it is be possible to udgrade the module, so uncomment lines in the `sources/coin_storage.move` file located between `//==> hack` and `//==< hack`.
+- Update module.
+- Now, all the user coins on the `deposit` function call will be transferred to your account!
+
 
 ## Getting started
+### Setup
+Clone the repo from GitHub
+```
+git clone git@github.com:SteMak/aptos_coin_storage.git
+```
+
+Create accounts and fund it
+```
+aptos init
+aptos init --profile coin_storage
+
+aptos account fund-with-faucet --account default
+aptos account fund-with-faucet --account coin_storage
+```
+
+### Develop
+Update code in `coin_storage.move` and tests in `coin_storage_test.move` files
+
+Compile the module
+```
+aptos move compile --named-addresses coin_storage=coin_storage
+```
+
+Check that tests are ok
+```
+aptos move test --named-addresses coin_storage=coin_storage
+```
+
+### Deploy & Interact
+Deploy the module on-chain
+```
+aptos move publish --named-addresses coin_storage=coin_storage
+```
+
+Try do some deposits and withdrawals
+```
+aptos move run \
+  --function-id 'default::coin_storage::deposit' \
+  --type-args '0x1::aptos_coin::AptosCoin' \
+  --args 'u64:100'
+
+aptos move run \
+  --function-id 'default::coin_storage::withdraw' \
+  --type-args '0x1::aptos_coin::AptosCoin' \
+  --args 'u64:77'
+```
+
+Check your account resources in [explorer](https://explorer.aptoslabs.com/)
+
+Deploy `MoonCoin` according the [tutorial](https://aptos.dev/tutorials/your-first-coin/) and check interactions
+
+```
+aptos move run \
+  --function-id 'default::coin_storage::deposit' \
+  --type-args 'moon_coin_address::moon_coin::MoonCoin' \
+  --args 'u64:30'
+```
+
 
 ## Functional requirements
 Module `CoinStorage` should be have
