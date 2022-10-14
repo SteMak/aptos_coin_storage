@@ -10,9 +10,15 @@ The project aims to show `Aptos` features and highlight important security point
     - [Options](#options)
     - [Errors](#errors)
   - [Architecture](#architecture)
+    - [Repo structure](#repo-structure)
+    - [Move.toml](#movetoml)
+    - [Module structure](#module-structure)
   - [Code notes](#code-notes)
   - [Getting started](#getting-started)
   - [Functional requirements](#functional-requirements)
+    - [Deposit](#deposit)
+    - [Withdraw](#withdraw)
+    - [Balance](#balance)
 
 
 ## Aptos CLI
@@ -89,7 +95,7 @@ Use `aptos config set-global-config --config-type VALUE` to chose where profiles
 
   `"Error": "Simulation failed with status: Transaction Executed and Committed with Error MAX_GAS_UNITS_BELOW_MIN_TRANSACTION_GAS_UNITS"`
 
-- `Error<411_LENGTH_REQUIRED>` - it may happen if you use outdated Aptos CLI version, it was fixed on v0.3.7
+- `Error<411_LENGTH_REQUIRED>` - it may happen if you use outdated Aptos CLI version, it was fixed on `v0.3.7`
 
   `"Error": "API error: Faucet issue: 411 Length Required"`
 
@@ -99,9 +105,130 @@ Use `aptos config set-global-config --config-type VALUE` to chose where profiles
 
 
 ## Architecture
+### Repo structure
+`build/` - dir contains module artifacts
+
+`sources/` - dir contains move modules
+
+`Move.toml` - configuration file
+
+### Move.toml
+`[package]` section contains
+- `name` identifier - is used when adding repo as dependency of another project
+- `version` - simple semver identifier
+- `upgrade_policy` - may be
+  - `immutable` - no code updates allowed
+  - `compatible` (is default) - new resources and functions may be added but old ones should be keeped
+
+`[addresses]` section contains named addresses that may be used in code
+- Common used `aptos_std = "0x1"` or just `std = "0x1"`
+- Named address that should be provided as parameter during compilation `NAME = "_"`
+
+`[dependencies]` section may contain local and global deps
+- Common used `devnet` verion of `aptos-framework`
+
+  `AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework/", rev = "devnet" }`
+
+- Or just import a local package (may be useful in case of huge project with a lot of modules interacting each other)
+
+  `LOCAL_PACK = { local = "LOCAL_PATH" }`
+
+### Module structure
+Module definition is `module ADDRESS::MODULE_NAME { ... }`
+
+In module there are:
+- Imports:
+
+  Imports are defined by the `use ADDRESS::MODULE` pattern and the imported modules/functions/structs may be used through the code
+
+- Structs and Resources:
+  - Structs are defined by keyword `struct` and may have typed fields
+
+    Structs may be copyable and droppable like simple variables
+
+    Struct may be generated based on generic type `struct NAME<phantom GENERIC>{ ... }`
+
+  - Resources are undroppable and uncopyable structs
+
+    Resoureces should be moved to storage or destroyed according to module policy before transaction ends
+
+    It is considered storing resource on user accounts (not in module storage)
+
+- Friends:
+  
+  Friends are modules whitelisted to run `public(friend)` functions
+
+  `friend ADDRESS::MODULE`
+
+- Functions
+
+  Functions could be
+  - `entry` - callable by user outside from blockchain
+  - `public` - callable by any other modules
+  - `public(friend)` - callable by friend modules
+  - `no modifier` - are internal only accessible in the module
+
+  Functions could have generic `type argument`
+
+  `fun FUNCTION<GENERIC>(ARGS: TYPES): RETURN_TYPE { CODE_DEPENDS_ON<GENERIC> }`
+
+Structs, friends and functions may be marked by `#[test_only]`
+
+This means the code is applied only for tests and is not accessible on-chain
+
 
 ## Code notes
 
 ## Getting started
 
 ## Functional requirements
+Module `CoinStorage` should be have
+- immutable upgrade policy
+- deployable on any address
+
+It should be implemented mechanism of depositing/withdrawing of any standard coin
+
+It should be possible for anyone manages user's `signer` object to deposit coins
+
+It should not be possible for anyone except of the user directly to withdraw user funds
+
+### Deposit
+Accepts user deposit, create wrapper resource moving it to caller account
+
+Signature:
+- `<CoinType>`: `resource` - resource of coin which will be deposited
+- `account`: `&signer` - link to caller signer object
+- `amount`: `u64` - amount of coins to deposit
+
+Fail conditions:
+- `NotFound(ECOIN_STORE_NOT_PUBLISHED)` - user is not registred in the coin module
+- `PermissionDenied(EFROZEN)` - user coin account is frozen
+- `InvalidArgument(EINSUFFICIENT_BALANCE)` - user don't have enough funds
+  
+Return: `void`
+
+### Withdraw
+Transfer user deposit back, is callable only by user itself
+
+Signature:
+- `<CoinType>`: `resource` - resource of coin which will be withdrawn
+- `account`: `&signer` - link to caller signer object
+- `amount`: `u64` - amount of coins to withdraw
+
+Fail conditions:
+- `NotFound(E_USER_IS_NOT_FOUND)` - user is not registred in the storage
+- `InvalidArgument(E_USER_INSUFFICIENT_BALANCE)` - user deposit is too small
+- `PermissionDenied(EFROZEN)` - user coin account is frozen
+  
+Return: `void`
+
+### Balance
+Return current user balance
+
+Signature:
+- `<CoinType>`: `resource` - resource of coin which will be checked
+- `account_addr`: `address` - address of user checked
+
+Fail conditions: `void`
+  
+Return: `u64` - stored balance
