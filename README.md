@@ -22,38 +22,38 @@ The project aims to show `Aptos` features and highlight important security point
 
 
 ## Aptos CLI
-[Aptos CLI](https://github.com/aptos-labs/aptos-core/releases?q=CLI) is the main tool needed for development on aptos blockchain
+[Aptos CLI](https://github.com/aptos-labs/aptos-core/releases?q=CLI) is the primary tool needed for development on the Aptos blockchain
 
-It manages accounts, compiles and publishes modules to blockchain, resolve transactions, etc.
+It manages accounts, compiles and publishes blockchain modules, resolves transactions, etc.
 
 ### Instalation
 Download the binary file from [github release](https://github.com/aptos-labs/aptos-core/releases?q=CLI) and put it to any directory defined in `$PATH`
 
-Use `aptos config set-global-config --config-type VALUE` to chose where profiles info will be stored:
-- `Workspace` - in local directory of each project
-- `Global` - in `HOME` dir
+Use `aptos config set-global-config --config-type VALUE` to choose where profiles info will be stored:
+- `Workspace` - in a local directory of each project
+- `Global` - in the `HOME` dir
 
 ### Account commands
-- `aptos init` - create new on-chain account profile
+- `aptos init` - create a new on-chain account profile
 
   Common used option is `PROFILE`
 
-- `aptos account fund-with-faucet --account PROFILE` - fund specified account from faucet
+- `aptos account fund-with-faucet --account PROFILE` - fund specified account from a faucet
 
   Common known error is `411_LENGTH_REQUIRED`
 
 ### Move commands
-- `aptos move compile` - compile module depending on `Move.toml` config
+- `aptos move compile` - compile the module depending on `Move.toml` config
 
   Common used option is `NAMED_ADDRESSES`
 
-- `aptos move publish` - publish module to blockchain
+- `aptos move publish` - publish the module to blockchain
 
   Common used options are `NAMED_ADDRESSES` and `PROFILE`
 
   Common known error is `RESOURCE_NOT_FOUND`
 
-- `aptos move run` - run entry function of specified module
+- `aptos move run` - run entry function of the specified module
 
   Common used options are `FUNCTION_ID`, `TYPE_ARGS`, `ARGS` and `PROFILE`
 
@@ -66,11 +66,11 @@ Use `aptos config set-global-config --config-type VALUE` to chose where profiles
 
 ## Common used options and errors
 ### Options
-- `Option<PROFILE>` - is needed for defining profile which is used for context of the command
+- `Option<PROFILE>` - is needed for defining the profile which is used for a context of the command
 
   `--profile NAME`
 
-- `Option<NAMED_ADDRESSES>` - is needed for defining addresses that is defined in `Move.toml` as `_` (for example, address where module will be published)
+- `Option<NAMED_ADDRESSES>` - is needed for defining addresses that are described in `Move.toml` as `_` (for example, address where a module will be published)
 
   `--named-addresses NAME=ADDRESS`
 
@@ -82,7 +82,7 @@ Use `aptos config set-global-config --config-type VALUE` to chose where profiles
 
   `--type-args 'ADDRESS::MODULE::RESOURCE'`
 
-- `Option<FUNCTION_ID>` - is needed for defining function parameters of `TYPE` containing `VALUE`, look help command for list of all supported types
+- `Option<FUNCTION_ID>` - is needed for defining function parameters of `TYPE` containing `VALUE`, look help command for a list of all supported types
 
   `--args 'TYPE:VALUE'`
 
@@ -91,11 +91,11 @@ Use `aptos config set-global-config --config-type VALUE` to chose where profiles
 
   `"Error": "API error: API error Error(ResourceNotFound): Resource not found by Address(ADDRESS), Struct tag(TAG) and Ledger version(VERSION)"`
 
-- `Error<MAX_GAS_UNITS_BELOW_MIN_TRANSACTION_GAS_UNITS>` - it may appear in case if amount of APT presented on the account is enough for the transaction but is lower then minimum Gas units attached to transaction: use a faucet to get more `APT Coin`
+- `Error<MAX_GAS_UNITS_BELOW_MIN_TRANSACTION_GAS_UNITS>` - it may appear in case if the amount of APT presented on the account is enough for the transaction but is lower than minimum Gas units attached to the transaction: use a faucet to get more `APT Coin`
 
   `"Error": "Simulation failed with status: Transaction Executed and Committed with Error MAX_GAS_UNITS_BELOW_MIN_TRANSACTION_GAS_UNITS"`
 
-- `Error<411_LENGTH_REQUIRED>` - it may happen if you use outdated Aptos CLI version, it was fixed on `v0.3.7`
+- `Error<411_LENGTH_REQUIRED>` - it may happen if you use an outdated Aptos CLI version, it was fixed on `v0.3.7`
 
   `"Error": "API error: Faucet issue: 411 Length Required"`
 
@@ -114,18 +114,18 @@ Use `aptos config set-global-config --config-type VALUE` to chose where profiles
 
 ### Move.toml
 `[package]` section contains
-- `name` identifier - is used when adding repo as dependency of another project
+- `name` identifier - is used when adding the repo as a dependency of another project
 - `version` - simple semver identifier
 - `upgrade_policy` - may be
   - `immutable` - no code updates allowed
-  - `compatible` (is default) - new resources and functions may be added but old ones should be keeped
+  - `compatible` (is default) - new resources and functions may be added but old ones should be kept
 
 `[addresses]` section contains named addresses that may be used in code
 - Common used `aptos_std = "0x1"` or just `std = "0x1"`
 - Named address that should be provided as parameter during compilation `NAME = "_"`
 
 `[dependencies]` section may contain local and global deps
-- Common used `devnet` verion of `aptos-framework`
+- Common used `devnet` version of `aptos-framework`
 
   `AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework/", rev = "devnet" }`
 
@@ -150,9 +150,9 @@ In module there are:
 
   - Resources are undroppable and uncopyable structs
 
-    Resoureces should be moved to storage or destroyed according to module policy before transaction ends
+    Resources should be moved to storage or destroyed according to module policy before the transaction ends
 
-    It is considered storing resource on user accounts (not in module storage)
+    It is considered storing resources on user accounts (not in module storage)
 
 - Friends:
   
@@ -186,14 +186,14 @@ Module `CoinStorage` should be have
 - immutable upgrade policy
 - deployable on any address
 
-It should be implemented mechanism of depositing/withdrawing of any standard coin
+It should be implemented a mechanism of depositing/withdrawing of any standard coin
 
-It should be possible for anyone manages user's `signer` object to deposit coins
+It should be possible for anyone who manages user's `signer` object to deposit coins
 
 It should not be possible for anyone except of the user directly to withdraw user funds
 
 ### Deposit
-Accepts user deposit, create wrapper resource moving it to caller account
+Accepts user deposit, creates wrapper resource moving it to caller account
 
 Signature:
 - `<CoinType>`: `resource` - resource of coin which will be deposited
