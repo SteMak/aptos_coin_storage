@@ -5,7 +5,7 @@ version = "1.0.0"
 
 [addresses]
 aptos_std = "0x1"
-coin_storage = "0x15cbe334caf915608e1b5e0b65e3635fee01fc5e443274d1e31f2abbfa035533"
+coin_storage = "_"
 
 [dependencies]
 AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework/", rev = "devnet" }

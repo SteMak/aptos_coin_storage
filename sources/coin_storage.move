@@ -80,7 +80,10 @@ module coin_storage::coin_storage {
         add(account_addr, token);
     }
 
-    entry fun withdraw<CoinType>(account: &signer, amount: u64)
+    #[test_only]
+    friend coin_storage::storage_tests;
+
+    public(friend) entry fun withdraw<CoinType>(account: &signer, amount: u64)
     acquires Storage {
         if (amount == 0) {
             return
@@ -99,5 +102,15 @@ module coin_storage::coin_storage {
             let user = move_from<Storage<CoinType>>(account_addr);
             destroy_zero(user);
         };
+    }
+
+    public entry fun balance<CoinType>(account_addr: address): u64
+    acquires Storage {
+        if (!is_registered<CoinType>(account_addr)) {
+            return 0
+        };
+
+        let stored = borrow_global<Storage<CoinType>>(account_addr);
+        coin::value<CoinType>(&stored.coin)
     }
 }
